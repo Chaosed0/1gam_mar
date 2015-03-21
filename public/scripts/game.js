@@ -10,7 +10,6 @@ define(['crafty', 'jquery',
     var gameElem = document.getElementById('game');
 
     Crafty.init(width, height, gameElem);  			  		
-    Crafty.background("#FFFFFF");
 
     Crafty.scene("Load", function() {
 
@@ -33,9 +32,35 @@ define(['crafty', 'jquery',
         console.log("MAIN");
         Crafty.background("#EEEEEE");
 
+        var shrink1 = Crafty.e("2D, Canvas, Circle, Tween")
+            .attr({ z: 1 })
+            .circle(width/2, height/2, width * 1.5)
+            .fillcolor("#EEEEEE")
+            .tween({radius: 20}, 2000);
+
+        var shrink2 = Crafty.e("2D, Canvas, Circle, Tween")
+            .attr({ z: 0 })
+            .fillcolor("#111111")
+            .circle(width/2, height/2, width * 1.5);
+
+        var tweenEnd = function() {
+            var ender = (this === shrink1 ? shrink1 : shrink2);
+            var starter = (this === shrink1 ? shrink2 : shrink1);
+
+            ender.z = 0;
+            ender.radius = width * 1.5;
+
+            starter.z = 1;
+            starter.tween({radius: 20}, 2000);
+        };
+
+        shrink1.bind("TweenEnd", tweenEnd);
+        shrink2.bind("TweenEnd", tweenEnd);
+
         var shape = Crafty.e("2D, Canvas, Circle")
-            .attr({x: width/2, y: height/2 })
-            .circle(0, 0, 20, "#000000");
+            .attr({ z: 1000 })
+            .circle(width/2, height/2, 20)
+            .fillcolor("#EEEEEE");
     });
     
     Crafty.scene("Load");
