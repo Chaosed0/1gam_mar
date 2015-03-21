@@ -1,0 +1,24 @@
+{
+  "name": "1gam_mar",
+  "version": "0.0.1",
+  "description": "#1gam march",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chaosed0/1gam_mar.git"
+  },
+  "author": "Chaosed0",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/chaosed0/1gam_mar/issues"
+  },
+  "homepage": "https://github.com/chaosed0/1gam_mar",
+  "dependencies": {
+    "bower": "^1.3.12",
+    "bower-requirejs": "^1.1.2",
+    "express": "^4.10.4"
+  }
+}
