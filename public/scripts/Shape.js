@@ -9,12 +9,11 @@ define(['crafty'], function(Crafty) {
 
         e.ctx.beginPath();
 
-        if (this._type === "RegularPolygon") {
+        if(this._sides < 7) {
             var angle = -Math.PI / 2;
             var radius = Math.min(this._w, this._h)/2;
-            var sides = this._data;
 
-            for(var i = 0; i < sides; i++) {
+            for(var i = 0; i < this._sides; i++) {
                 var p = {x: this.x + this._w/2, y: this.y + this._h/2};
                 p.x += Math.cos(angle) * radius;
                 p.y += Math.sin(angle) * radius;
@@ -25,9 +24,11 @@ define(['crafty'], function(Crafty) {
                     e.ctx.lineTo(p.x, p.y);
                 }
 
-                angle += (2 * Math.PI / sides);
+                angle += (2 * Math.PI / this._sides);
             }
-        } else if (this._type === "Circle") {
+        } else {
+            /* Okay , technically a circle is a regular polygon with infinite sides,
+             * but just bear with me */
             var radius = Math.min(this._w, this._h)/2;
             e.ctx.arc(this.x + this.w/2, this.y + this.h/2, radius, 0, 2 * Math.PI);
         }
@@ -46,8 +47,7 @@ define(['crafty'], function(Crafty) {
     }
 
     Crafty.c("Shape", {
-        _type: null,
-        _data: null,
+        _sides: null,
         _strokecolor: '#000000',
         _fillcolor: null,
         ready: false,
@@ -63,16 +63,14 @@ define(['crafty'], function(Crafty) {
             this.trigger("Invalidate");
         },
 
-        regularpolygon: function(sides) {
-            this._type = "RegularPolygon";
-            this._data = sides;
-            return this;
-        },
-
-        circle: function() {
-            this._type = "Circle";
-            this._data = null;
-            return this;
+        sides: function(sides) {
+            if (sides === undefined) {
+                return this._sides;
+            } else {
+                this._sides = sides;
+                this.trigger("Invalidate");
+                return this;
+            }
         },
 
         strokecolor: function(color) {
