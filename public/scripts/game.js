@@ -79,6 +79,9 @@ define(['crafty', 'jquery', './Util',
         shrink1.bind("TweenEnd", tweenEnd);
         shrink2.bind("TweenEnd", tweenEnd);
 
+        shrink1.unbind("Move");
+        shrink2.unbind("Move");
+
         var shape = Crafty.e("2D, Canvas, Shape")
             .attr({ x: width/2 - 20, y: height/2 - 20, w: 40, h: 40, z: 1000 })
             .sides(3)
