@@ -6,11 +6,13 @@ define(['crafty', 'jquery', './Util',
     var self = this;
     var map;
     
-    var width = 800;
-    var height = 600;
+    var width = $(window).width();
+    var height = $(window).height();
     var gameElem = document.getElementById('game');
 
     Crafty.init(width, height, gameElem);  			  		
+
+    Crafty.viewport.clampToEntities = false;
 
     Crafty.scene("Load", function() {
 
@@ -34,20 +36,20 @@ define(['crafty', 'jquery', './Util',
         shape.sides(sides);
 
         if (sides === 3) {
-            shape.x = - width * 1.5;
-            shape.y = - height * 1.5;
-            shape.w = width * 4;
-            shape.h = height * 4;
+            shape.x = - width * 2;
+            shape.y = - height * 2;
+            shape.w = width * 5;
+            shape.h = height * 5;
         } else if (sides < 7) {
             shape.x = - width;
             shape.y = - height;
             shape.w = width * 3;
             shape.h = height * 3;
         } else {
-            shape.x = - width / 2;
-            shape.y = - height / 2;
-            shape.w = width * 2;
-            shape.h = height * 2;
+            shape.x = - width;
+            shape.y = - height;
+            shape.w = width * 3;
+            shape.h = height * 3;
         }
     }
 
@@ -60,7 +62,7 @@ define(['crafty', 'jquery', './Util',
             .tween({x: width/2 - 20, y: height/2 - 20, w: 40, h: 40}, 2000, "EaseInOut");
 
         var shrink2 = Crafty.e("2D, Canvas, Shape, Tween")
-            .fillcolor("#666666");
+            .fillcolor("#AAAAAA");
 
         randomShape(shrink1);
         randomShape(shrink2);
@@ -98,8 +100,6 @@ define(['crafty', 'jquery', './Util',
                     shape.sides(sides+1);
                 }
             }
-
-            console.log(shape.sides());
         }
 
         Crafty.bind("KeyDown", keyDownHandler);

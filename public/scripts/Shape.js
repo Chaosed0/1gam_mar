@@ -9,9 +9,9 @@ define(['crafty'], function(Crafty) {
 
         e.ctx.beginPath();
 
+        var radius = Math.min(this._w, this._h)/2 * 0.95;
         if(this._sides < 7) {
             var angle = -Math.PI / 2;
-            var radius = Math.min(this._w, this._h)/2;
 
             for(var i = 0; i < this._sides; i++) {
                 var p = {x: this.x + this._w/2, y: this.y + this._h/2};
@@ -29,7 +29,6 @@ define(['crafty'], function(Crafty) {
         } else {
             /* Okay , technically a circle is a regular polygon with infinite sides,
              * but just bear with me */
-            var radius = Math.min(this._w, this._h)/2;
             e.ctx.arc(this.x + this.w/2, this.y + this.h/2, radius, 0, 2 * Math.PI);
         }
 
@@ -42,6 +41,7 @@ define(['crafty'], function(Crafty) {
 
         if (this._strokecolor) {
             e.ctx.strokeStyle = this._strokecolor;
+            e.ctx.lineWidth = 5;
             e.ctx.stroke();
         }
     }
