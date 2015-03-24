@@ -74,15 +74,23 @@ define(['crafty'], function(Crafty) {
         },
 
         strokecolor: function(color) {
-            this._strokecolor = color;
-            this.trigger("Invalidate");
-            return this;
+            if (color === undefined) {
+                return this._strokecolor;
+            } else {
+                this._strokecolor = color;
+                this.trigger("Invalidate");
+                return this;
+            }
         },
 
         fillcolor: function(color) {
-            this._fillcolor = color;
-            this.trigger("Invalidate");
-            return this;
+            if (color === undefined) {
+                return this._fillcolor;
+            } else {
+                this._fillcolor = color;
+                this.trigger("Invalidate");
+                return this;
+            }
         },
     });
 });

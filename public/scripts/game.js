@@ -4,8 +4,9 @@ define(['crafty', 'jquery', './Util',
         './Shape',
     ], function(Crafty, $, u) {
 
-    const defaultTweenTime = 2000;
-    const defaultEasingFunc = "easeInQuad";
+    const initialTweenTime = 2500;
+    const defaultEasingFunc = "linear";
+    const colors = ["#AAFFAA", "#AAAAFF", "#FFAAAA", "#FFFFAA"];
 
     var self = this;
     
@@ -15,9 +16,14 @@ define(['crafty', 'jquery', './Util',
 
     var lost = false;
     var lostTime = 0;
+    var points = 0;
+
+    var curColor = colors[0];
+
+    /* Crafty doesn't have this for some reason */
+    Crafty.keys.COLON = 186;
 
     Crafty.init(width, height, gameElem);  			  		
-
     Crafty.viewport.clampToEntities = false;
 
     Crafty.scene("Load", function() {
@@ -38,19 +44,15 @@ define(['crafty', 'jquery', './Util',
     });
 
     var randomShape = function(shape) {
-        var sides = Math.floor(u.getRandom(3, 8));
+        var sides = Math.floor(u.getRandom(3, 7));
         shape.sides(sides);
+        shape.fillcolor(curColor);
 
         if (sides === 3) {
             shape.x = - width * 2;
             shape.y = - height * 2;
             shape.w = width * 5;
             shape.h = height * 5;
-        } else if (sides < 7) {
-            shape.x = - width;
-            shape.y = - height;
-            shape.w = width * 3;
-            shape.h = height * 3;
         } else {
             shape.x = - width;
             shape.y = - height;
@@ -59,15 +61,35 @@ define(['crafty', 'jquery', './Util',
         }
     }
 
+    var randomColor = function(shape) {
+        var prevColor = curColor;
+        while (curColor === prevColor) {
+            curColor = u.randomElem(colors);
+        }
+
+        randomShape(shape);
+    }
+
+    var circleShape = function(shape) {
+        shape.sides(7);
+        shape.fillcolor(curColor);
+        shape.x = - width;
+        shape.y = - height;
+        shape.w = width * 3;
+        shape.h = height * 3;
+    }
+
     Crafty.scene("Main", function () {
         console.log("MAIN");
         Crafty.background("#AAAAAA");
 
+        var tweenTime = initialTweenTime;
+
         var shrink1 = Crafty.e("2D, Canvas, Shape, Tween")
-            .fillcolor("#AAAAAA");
+            .fillcolor(curColor);
 
         var shrink2 = Crafty.e("2D, Canvas, Shape, Tween")
-            .fillcolor("#AAAAAA");
+            .fillcolor(curColor);
 
         randomShape(shrink1);
         randomShape(shrink2);
@@ -77,12 +99,12 @@ define(['crafty', 'jquery', './Util',
         var playerShape = Crafty.e("2D, Canvas, Shape, Tween")
             .attr(playerDimensions)
             .sides(3)
-            .fillcolor("#AAAAAA");
+            .fillcolor(curColor);
         playerShape.z = 1000;
 
         var tweenToPlayer = function(shape, time, easingFunc) {
             if (time === undefined) {
-                time = defaultTweenTime;
+                time = tweenTime;
             }
 
             if (easingFunc === undefined) {
@@ -96,21 +118,30 @@ define(['crafty', 'jquery', './Util',
             var ender = (this === shrink1 ? shrink1 : shrink2);
             var starter = (this === shrink1 ? shrink2 : shrink1);
 
-            if (ender.sides() != playerShape.sides()) {
+            if (ender.sides() !== playerShape.sides() ||
+                    starter.fillcolor() !== playerShape.fillcolor()) {
                 /* Lose */
                 lost = true;
                 lostTime = (new Date()).getTime();
-                Crafty.pause();
+                ender.visible = false;
+                playerShape.tween({ x: width/2, y: height/2, w: 0, h: 0 }, 1000);
             } else {
                 /* Success */
+                points++;
+
                 ender.z = 0;
-                randomShape(ender);
+                if (points%4 == 0) {
+                    randomColor(ender);
+                    tweenTime = Math.max(500, tweenTime - 200);
+                } else {
+                    randomShape(ender);
+                }
 
                 starter.z = 1;
                 tweenToPlayer(starter);
 
                 playerShape.attr({ x: width/2 - 30, y: height/2 - 30, w: 60, h: 60});
-                tweenToPlayer(playerShape, 300, "linear");
+                tweenToPlayer(playerShape, tweenTime/10, "linear");
             }
         };
 
@@ -134,7 +165,6 @@ define(['crafty', 'jquery', './Util',
                 if ((new Date).getTime() - lostTime > 500) {
                     lost = false;
                     Crafty.scene("Main");
-                    Crafty.pause();
                 }
             } else {
                 var sides = playerShape.sides();
@@ -156,6 +186,18 @@ define(['crafty', 'jquery', './Util',
                         break;
                     case Crafty.keys.F:
                         playerShape.sides(6);
+                        break;
+                    case Crafty.keys.J:
+                        playerShape.fillcolor(colors[0]);
+                        break;
+                    case Crafty.keys.K:
+                        playerShape.fillcolor(colors[1]);
+                        break;
+                    case Crafty.keys.L:
+                        playerShape.fillcolor(colors[2]);
+                        break;
+                    case Crafty.keys.COLON:
+                        playerShape.fillcolor(colors[3]);
                         break;
                     case Crafty.keys.SPACE:
                         playerShape.sides(7);
