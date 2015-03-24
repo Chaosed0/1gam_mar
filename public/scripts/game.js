@@ -4,8 +4,8 @@ define(['crafty', 'jquery', './Util',
         './Shape',
     ], function(Crafty, $, u) {
 
-    const tweenTime = 2000;
-    const easingFunc = "easeInQuad";
+    const defaultTweenTime = 2000;
+    const defaultEasingFunc = "easeInQuad";
 
     var self = this;
     
@@ -14,6 +14,7 @@ define(['crafty', 'jquery', './Util',
     var gameElem = document.getElementById('game');
 
     var lost = false;
+    var lostTime = 0;
 
     Crafty.init(width, height, gameElem);  			  		
 
@@ -70,15 +71,25 @@ define(['crafty', 'jquery', './Util',
 
         randomShape(shrink1);
         randomShape(shrink2);
+        
+        var playerDimensions = { x: width/2 - 20, y: height/2 - 20, w: 40, h: 40}; 
 
-        var playerShape = Crafty.e("2D, Canvas, Shape")
-            .attr({ x: width/2 - 20, y: height/2 - 20, w: 40, h: 40, z: 1000 })
+        var playerShape = Crafty.e("2D, Canvas, Shape, Tween")
+            .attr(playerDimensions)
             .sides(3)
-            .fillcolor("#EEEEEE");
+            .fillcolor("#AAAAAA");
+        playerShape.z = 1000;
 
-        var tweenToPlayer = function(shape) {
-            shape.tween({x: playerShape.x, y: playerShape.y, w: playerShape.w, h: playerShape.h},
-                    tweenTime, easingFunc);
+        var tweenToPlayer = function(shape, time, easingFunc) {
+            if (time === undefined) {
+                time = defaultTweenTime;
+            }
+
+            if (easingFunc === undefined) {
+                easingFunc = defaultEasingFunc;
+            }
+
+            shape.tween(playerDimensions, time, easingFunc);
         }
 
         var tweenEnd = function() {
@@ -88,14 +99,18 @@ define(['crafty', 'jquery', './Util',
             if (ender.sides() != playerShape.sides()) {
                 /* Lose */
                 lost = true;
-                console.log("loss: " + ender.sides());
+                lostTime = (new Date()).getTime();
                 Crafty.pause();
             } else {
+                /* Success */
                 ender.z = 0;
                 randomShape(ender);
 
                 starter.z = 1;
                 tweenToPlayer(starter);
+
+                playerShape.attr({ x: width/2 - 30, y: height/2 - 30, w: 60, h: 60});
+                tweenToPlayer(playerShape, 300, "linear");
             }
         };
 
@@ -116,19 +131,37 @@ define(['crafty', 'jquery', './Util',
 
         var keyDownHandler = function(e) {
             if (lost) {
-                lost = false;
-                Crafty.scene("Main");
-                Crafty.pause();
+                if ((new Date).getTime() - lostTime > 500) {
+                    lost = false;
+                    Crafty.scene("Main");
+                    Crafty.pause();
+                }
             } else {
                 var sides = playerShape.sides();
-                if (e.key === Crafty.keys.LEFT_ARROW) {
-                    if (sides > 3) {
-                        playerShape.sides(sides-1);
-                    }
-                } else if (e.key === Crafty.keys.RIGHT_ARROW) {
-                    if (sides < 8) {
-                        playerShape.sides(sides+1);
-                    }
+                switch (e.key) {
+                    case Crafty.keys.LEFT_ARROW:
+                        playershape.sides(Math.max(3, sides-1));
+                        break;
+                    case Crafty.keys.RIGHT_ARROW:
+                        playerShape.sides(Math.min(7, sides+1));
+                        break;
+                    case Crafty.keys.A:
+                        playerShape.sides(3);
+                        break;
+                    case Crafty.keys.S:
+                        playerShape.sides(4);
+                        break;
+                    case Crafty.keys.D:
+                        playerShape.sides(5);
+                        break;
+                    case Crafty.keys.F:
+                        playerShape.sides(6);
+                        break;
+                    case Crafty.keys.SPACE:
+                        playerShape.sides(7);
+                        break;
+                    default:
+                        break;
                 }
             }
         }
