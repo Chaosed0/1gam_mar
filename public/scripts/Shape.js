@@ -46,6 +46,14 @@ define(['crafty'], function(Crafty) {
         }
     }
 
+    var shapeDimensions = {
+        3: 4,
+        4: 3,
+        5: 3,
+        6: 3,
+        7: 3,
+    };
+
     Crafty.c("Shape", {
         _sides: null,
         _strokecolor: '#000000',
@@ -92,5 +100,15 @@ define(['crafty'], function(Crafty) {
                 return this;
             }
         },
+
+        enclose: function(width, height) {
+            var size = shapeDimensions[this._sides];
+            this.x = - width * (size - 1)/2;
+            this.y = - height * (size - 1)/2;
+            this.w = width * size;
+            this.h = height * size;
+
+            return this;
+        }
     });
 });
