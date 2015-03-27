@@ -7,7 +7,7 @@ define(['crafty', 'jquery', './Util',
     const initialTweenTime = 2500;
     const tutorialTweenTime = 1500;
     const defaultEasingFunc = "linear";
-    const colors = ["#AAFFAA", "#AAAAFF", "#FFAAAA"];
+    const colors = ["#FFAAAA", "#AAFFAA", "#AAAAFF"];
 
     var self = this;
     
@@ -22,7 +22,7 @@ define(['crafty', 'jquery', './Util',
     var lostTime = 0;
     var points = 0;
 
-    var curColor = colors[0];
+    var curColor = colors[colors.length-1];
 
     Crafty.init(width, height, gameElem);  			  		
     Crafty.viewport.clampToEntities = false;
@@ -83,15 +83,24 @@ define(['crafty', 'jquery', './Util',
             6: "F",
             7: "Space",
         }
+        var colorToKey = {
+            0: "J",
+            1: "K",
+            2: "L",
+        };
+
+        var teachingColors = false;
+        var tutorialSides = 3;
+        var tutorialColor = 0;
 
         var partialTween = function(shape, fraction, time) {
             var finalWidth = (shape.w - playerDimensions.w) * (1-fraction);
-            var finalHeight = (shape.w - playerDimensions.h) * (1-fraction);
+            var finalHeight = (shape.h - playerDimensions.h) * (1-fraction);
             var end = {
                 x: playerDimensions.x - finalWidth/2,
-                y: playerDimensions.y - finalWidth/2,
-                w: finalWidth,
-                h: finalHeight,
+                y: playerDimensions.y - finalHeight/2,
+                w: playerDimensions.w + finalWidth,
+                h: playerDimensions.h + finalHeight,
             };
             tweenTo(shape, end, time);
         };
@@ -105,19 +114,30 @@ define(['crafty', 'jquery', './Util',
                 ender.visible = false;
                 Crafty.trigger("Lose");
             } else {
-                if (ender.sides >= 7) {
-                    /* No more shapes to teach, start on colors */
+                if (tutorialColor >= colors.length) {
+                    /* No more colors to teach - it's the end of the tutorial */
+                    Crafty.trigger("TutorialEnd");
                 } else {
+                    if (ender.sides() >= 7) {
+                        /* No more shapes to teach, change to colors */
+                        teachingColors = true;
+                        ender.sides(7);
+                        ender.fillcolor(colors[tutorialColor]);
+                        tutorialColor++;
+                    } else {
+                        ender.sides(Math.min(tutorialSides+2, 7));
+                        tutorialSides++;
+                    }
                     ender.z = 0;
-                    ender.sides(ender.sides()+2);
                     ender.enclose(width, height);
                     ender.unbind("TweenEnd", tweenEnd2);
 
                     starter.z = 1;
                     starter.bind("TweenEnd", tweenEnd1);
                     partialTween(starter, fraction, tutorialTweenTime*fraction);
-                    Crafty.trigger("Score");
                 }
+
+                Crafty.trigger("Score");
             }
         }
 
@@ -131,8 +151,14 @@ define(['crafty', 'jquery', './Util',
             var ender = this;
 
             ender.unbind("TweenEnd", tweenEnd1);
-            text.text(sidesToKey[ender.sides()]);
             text.visible = true;
+
+            if (!teachingColors) {
+                text.text(sidesToKey[ender.sides()]);
+            } else {
+                text.text(colorToKey[tutorialColor-1]);
+            }
+
             var keydown = function() {
                 Crafty.unbind("KeyDown", keydown);
                 continueTween(ender);
@@ -166,17 +192,25 @@ define(['crafty', 'jquery', './Util',
                 }
 
                 starter.z = 1;
-                tweenToPlayer(starter);
+                tweenTo(starter, playerDimensions, tweenTime);
 
                 Crafty.trigger("Score");
             }
         };
 
+        curColor = u.randomElem(colors);
+
+        randomShape(shape1);
+        randomShape(shape2);
+
         shape1.bind("TweenEnd", tweenEnd);
         shape2.bind("TweenEnd", tweenEnd);
 
+        shape1.z = 1;
+        shape2.z = 0;
+
         /* Start one of the shapes tweening toward the player */
-        tweenToPlayer(shape1);
+        tweenTo(shape1, playerDimensions, tweenTime);
     }
 
     Crafty.scene("Main", function () {
@@ -202,7 +236,7 @@ define(['crafty', 'jquery', './Util',
 
         var playerShape = Crafty.e("2D, Canvas, Shape, Tween")
             .attr(playerDimensions)
-            .sides(3)
+            .sides(7)
             .fillcolor(curColor);
         playerShape.z = 1000;
 
@@ -213,24 +247,41 @@ define(['crafty', 'jquery', './Util',
         shape1.unbind("Move");
         shape2.unbind("Move");
 
-        tutorialFlow(shape1, shape2, tutorialText, playerShape);
+        if (tutorial) {
+            tutorialFlow(shape1, shape2, tutorialText, playerShape);
+        } else {
+            normalFlow(shape1, shape2, playerShape);
+        }
 
         Crafty.bind("Score", function() {
-            points++;
+            if (!tutorial) {
+                points++;
+            }
+
             playerShape.attr({ x: width/2 - 30, y: height/2 - 30, w: 60, h: 60});
             tweenTo(playerShape, playerDimensions, 300, "linear");
         });
 
         Crafty.bind("Lose", function() {
             lost = true;
+            points = 0;
             lostTime = (new Date()).getTime();
             playerShape.tween({ x: width/2, y: height/2, w: 0, h: 0 }, 1000);
+        });
+
+        Crafty.bind("TutorialEnd", function() {
+            points = 0;
+            tutorial = false;
+            normalFlow(shape1, shape2, playerShape);
         });
 
         var keyDownHandler = function(e) {
             if (lost) {
                 if ((new Date).getTime() - lostTime > 500) {
                     lost = false;
+                    Crafty.unbind("Score");
+                    Crafty.unbind("Lose");
+                    Crafty.unbind("TutorialEnd");
                     Crafty.scene("Main");
                 }
             } else {

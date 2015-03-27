@@ -9,7 +9,7 @@ define(['crafty'], function(Crafty) {
 
         e.ctx.beginPath();
 
-        var radius = Math.min(this._w, this._h)/2 * 0.95;
+        var radius = Math.min(this._w, this._h)/2;
         if(this._sides < 7) {
             var angle = -Math.PI / 2;
 
@@ -47,11 +47,11 @@ define(['crafty'], function(Crafty) {
     }
 
     var shapeDimensions = {
-        3: 4,
-        4: 3,
-        5: 3,
-        6: 3,
-        7: 3,
+        3: 3.5,
+        4: 2,
+        5: 2,
+        6: 2,
+        7: 2,
     };
 
     Crafty.c("Shape", {
@@ -102,11 +102,12 @@ define(['crafty'], function(Crafty) {
         },
 
         enclose: function(width, height) {
-            var size = shapeDimensions[this._sides];
-            this.x = - width * (size - 1)/2;
-            this.y = - height * (size - 1)/2;
-            this.w = width * size;
-            this.h = height * size;
+            var size = shapeDimensions[Math.min(this._sides, 7)];
+            var length = Math.max(width, height);
+            this.w = length * size;
+            this.h = length * size;
+            this.x = width / 2 - this.w/2;
+            this.y = height / 2 - this.h/2;
 
             return this;
         }
