@@ -184,7 +184,7 @@ define(['crafty', 'jquery', './Util',
             } else {
                 /* Success */
                 ender.z = 0;
-                if (points%4 == 0) {
+                if (points != 0 && points%4 == 0) {
                     randomColor(ender);
                     tweenTime = Math.max(500, tweenTime - 200);
                 } else {
