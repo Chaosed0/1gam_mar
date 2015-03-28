@@ -108,6 +108,7 @@ define(['crafty', 'jquery', './Util',
         var tweenEnd2 = function() {
             var ender = this;
             var starter = (this === shape1 ? shape2 : shape1);
+            ender.unbind("TweenEnd", tweenEnd2);
 
             if (ender.sides() !== playerShape.sides() ||
                     starter.fillcolor() !== playerShape.fillcolor()) {
@@ -130,7 +131,6 @@ define(['crafty', 'jquery', './Util',
                     }
                     ender.z = 0;
                     ender.enclose(width, height);
-                    ender.unbind("TweenEnd", tweenEnd2);
 
                     starter.z = 1;
                     starter.bind("TweenEnd", tweenEnd1);
