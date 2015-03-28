@@ -111,7 +111,7 @@ define(['crafty', 'jquery', './Util',
             ender.unbind("TweenEnd", tweenEnd2);
 
             if (ender.sides() !== playerShape.sides() ||
-                    starter.fillcolor() !== playerShape.fillcolor()) {
+                    ender.fillcolor() !== playerShape.fillcolor()) {
                 ender.visible = false;
                 Crafty.trigger("Lose");
             } else {
@@ -119,18 +119,22 @@ define(['crafty', 'jquery', './Util',
                     /* No more colors to teach - it's the end of the tutorial */
                     Crafty.trigger("TutorialEnd");
                 } else {
-                    if (ender.sides() >= 7) {
-                        /* No more shapes to teach, change to colors */
-                        teachingColors = true;
-                        ender.sides(7);
-                        ender.fillcolor(colors[tutorialColor]);
-                        tutorialColor++;
-                    } else {
-                        ender.sides(Math.min(tutorialSides+2, 7));
-                        tutorialSides++;
-                    }
+                    ender.sides(tutorialSides+2);
                     ender.z = 0;
                     ender.enclose(width, height);
+
+                    if (tutorialSides < 7) {
+                        tutorialSides++;
+                    } else {
+                        teachingColors = true;
+                        tutorialColor++;
+                    }
+
+                    if (ender.sides() > 7) {
+                        /* No more shapes to teach, change to colors */
+                        ender.sides(7);
+                        ender.fillcolor(colors[tutorialColor]);
+                    }
 
                     starter.z = 1;
                     starter.bind("TweenEnd", tweenEnd1);
@@ -177,7 +181,7 @@ define(['crafty', 'jquery', './Util',
             var starter = (this === shape1 ? shape2 : shape1);
 
             if (ender.sides() !== playerShape.sides() ||
-                    starter.fillcolor() !== playerShape.fillcolor()) {
+                    ender.fillcolor() !== playerShape.fillcolor()) {
                 /* Lose */
                 ender.visible = false;
                 Crafty.trigger("Lose");
