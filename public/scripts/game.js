@@ -13,8 +13,8 @@ define(['crafty', 'jquery', './Util',
 
     var self = this;
     
-    var width = $(window).width();
-    var height = $(window).height();
+    var width = $(document).width();
+    var height = $(document).height();
     var gameElem = document.getElementById('game');
 
     var playerRect = { x: width/2 - 20, y: height/2 - 20, w: 40, h: 40}; 
