@@ -17,7 +17,7 @@ define(['crafty', 'jquery', './Util',
     var height = $(window).height();
     var gameElem = document.getElementById('game');
 
-    var playerDimensions = { x: width/2 - 20, y: height/2 - 20, w: 40, h: 40}; 
+    var playerRect = { x: width/2 - 20, y: height/2 - 20, w: 40, h: 40}; 
     var tutorial = false;
     var lostTime = 0;
 
@@ -43,12 +43,12 @@ define(['crafty', 'jquery', './Util',
         });
     });
 
-    var playerDimClone = function() {
+    var playerRectClone = function() {
         return {
-            x: playerDimensions.x,
-            y: playerDimensions.y,
-            w: playerDimensions.w,
-            h: playerDimensions.h
+            x: playerRect.x,
+            y: playerRect.y,
+            w: playerRect.w,
+            h: playerRect.h
         }
     }
 
@@ -118,13 +118,13 @@ define(['crafty', 'jquery', './Util',
         var tutorialColor = 0;
 
         var partialTween = function(shape, fraction, time) {
-            var finalWidth = (shape.w - playerDimensions.w) * (1-fraction);
-            var finalHeight = (shape.h - playerDimensions.h) * (1-fraction);
+            var finalWidth = (shape.w - playerRect.w) * (1-fraction);
+            var finalHeight = (shape.h - playerRect.h) * (1-fraction);
             var end = {
-                x: playerDimensions.x - finalWidth/2,
-                y: playerDimensions.y - finalHeight/2,
-                w: playerDimensions.w + finalWidth,
-                h: playerDimensions.h + finalHeight,
+                x: playerRect.x - finalWidth/2,
+                y: playerRect.y - finalHeight/2,
+                w: playerRect.w + finalWidth,
+                h: playerRect.h + finalHeight,
             };
             tweenTo(shape, end, time);
         };
@@ -173,7 +173,7 @@ define(['crafty', 'jquery', './Util',
 
         var continueTween = function(ender) {
             text.visible = false;
-            tweenTo(ender, playerDimClone(), tutorialTweenTime*(1-fraction));
+            tweenTo(ender, playerRectClone(), tutorialTweenTime*(1-fraction));
             ender.bind("TweenEnd", tweenEnd2);
         }
 
@@ -223,7 +223,7 @@ define(['crafty', 'jquery', './Util',
                 timer.destroy();
                 for (var i = 0; i < numShapes; i++) {
                     shapes[i].unbind("TweenEnd");
-                    shapes[i].cancelTween(playerDimClone());
+                    shapes[i].cancelTween(playerRectClone());
                 }
                 /* Trigger loss */
                 Crafty.trigger("Lose");
@@ -271,7 +271,7 @@ define(['crafty', 'jquery', './Util',
         }
 
         function nextTween() {
-            tweenTo(shapes[curShape], playerDimClone(), tweenTime);
+            tweenTo(shapes[curShape], playerRectClone(), tweenTime);
             curShape = (curShape+1)%numShapes;
             console.log(curShape);
         }
@@ -300,7 +300,7 @@ define(['crafty', 'jquery', './Util',
         tutorialText.visible = false;
 
         var playerShape = Crafty.e("2D, Canvas, Shape, Tween")
-            .attr(playerDimClone())
+            .attr(playerRectClone())
             .sides(7)
             .fillcolor(curColor);
         playerShape.z = 1000;
@@ -317,7 +317,7 @@ define(['crafty', 'jquery', './Util',
             }
 
             playerShape.attr({ x: width/2 - 30, y: height/2 - 30, w: 60, h: 60});
-            tweenTo(playerShape, playerDimClone(), 300, "linear");
+            tweenTo(playerShape, playerRectClone(), 300, "linear");
         });
 
         Crafty.bind("Lose", function() {
