@@ -18,7 +18,7 @@ define(['crafty', 'jquery', './Util',
     var gameElem = document.getElementById('game');
 
     var playerRect = { x: width/2 - 20, y: height/2 - 20, w: 40, h: 40}; 
-    var tutorial = false;
+    var tutorial = true;
     var lostTime = 0;
 
     var curColor = colors[colors.length-1];
@@ -139,6 +139,7 @@ define(['crafty', 'jquery', './Util',
                 ender.visible = false;
                 Crafty.trigger("Lose");
             } else {
+                Crafty.trigger("Score");
                 if (tutorialColor >= colors.length) {
                     /* No more colors to teach - it's the end of the tutorial */
                     shape1.destroy();
@@ -166,8 +167,6 @@ define(['crafty', 'jquery', './Util',
                     starter.bind("TweenEnd", tweenEnd1);
                     partialTween(starter, fraction, tutorialTweenTime*fraction);
                 }
-
-                Crafty.trigger("Score");
             }
         }
 
@@ -228,6 +227,8 @@ define(['crafty', 'jquery', './Util',
                 /* Trigger loss */
                 Crafty.trigger("Lose");
             } else {
+                /* Add to score counter, play FX */
+                Crafty.trigger("Score");
                 /* Put this shape behind the last shape */
                 ender.z = shapes[((closestShape-1)+numShapes)%numShapes].z-1;
 
@@ -239,9 +240,6 @@ define(['crafty', 'jquery', './Util',
                 } else {
                     randomShape(ender);
                 }
-
-                /* Add to score counter */
-                Crafty.trigger("Score");
             }
 
             closestShape = (closestShape+1)%numShapes;
@@ -291,13 +289,19 @@ define(['crafty', 'jquery', './Util',
         console.log("MAIN");
         Crafty.background("#AAAAAA");
 
-        var points = 0;
+        var score = 0;
         var lost = false;
 
         var tutorialText = Crafty.e("2D, Canvas, Text")
             .attr({ x: width / 2 - 200, y: height / 2 - 200, z: 2000 })
             .textFont({ size: '30px', weight: 'bold' });
         tutorialText.visible = false;
+
+        var scoreText = Crafty.e("2D, Canvas, Text")
+            .attr({ x: 30, y: 30 })
+            .textFont({ size: '30px', weight: 'bold' })
+            .text(score);
+        scoreText.z = 2000;
 
         var playerShape = Crafty.e("2D, Canvas, Shape, Tween")
             .attr(playerRectClone())
@@ -306,14 +310,19 @@ define(['crafty', 'jquery', './Util',
         playerShape.z = 1000;
 
         if (tutorial) {
+            scoreText.visible = false;
             tutorialFlow(tutorialText, playerShape);
         } else {
+            scoreText.visible = true;
             normalFlow(playerShape);
         }
 
         Crafty.bind("Score", function() {
+            /* If it's the tutorial, we want the "beat" effect but
+             * not increased score */
             if (!tutorial) {
-                points++;
+                score++;
+                scoreText.text(score);
             }
 
             playerShape.attr({ x: width/2 - 30, y: height/2 - 30, w: 60, h: 60});
@@ -327,8 +336,9 @@ define(['crafty', 'jquery', './Util',
         });
 
         Crafty.bind("TutorialEnd", function() {
-            points = 0;
             tutorial = false;
+            score = 0;
+            scoreText.visible = true;
             normalFlow(playerShape);
         });
 
