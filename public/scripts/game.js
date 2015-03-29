@@ -18,11 +18,8 @@ define(['crafty', 'jquery', './Util',
     var gameElem = document.getElementById('game');
 
     var playerDimensions = { x: width/2 - 20, y: height/2 - 20, w: 40, h: 40}; 
-
     var tutorial = false;
-    var lost = false;
     var lostTime = 0;
-    var points = 0;
 
     var curColor = colors[colors.length-1];
 
@@ -45,6 +42,15 @@ define(['crafty', 'jquery', './Util',
             Crafty.scene("Main");		
         });
     });
+
+    var playerDimClone = function() {
+        return {
+            x: playerDimensions.x,
+            y: playerDimensions.y,
+            w: playerDimensions.w,
+            h: playerDimensions.h
+        }
+    }
 
     var randomShape = function(shape) {
         var sides = Math.floor(u.getRandom(3, 7));
@@ -167,7 +173,7 @@ define(['crafty', 'jquery', './Util',
 
         var continueTween = function(ender) {
             text.visible = false;
-            tweenTo(ender, playerDimensions, tutorialTweenTime*(1-fraction));
+            tweenTo(ender, playerDimClone(), tutorialTweenTime*(1-fraction));
             ender.bind("TweenEnd", tweenEnd2);
         }
 
@@ -217,7 +223,7 @@ define(['crafty', 'jquery', './Util',
                 timer.destroy();
                 for (var i = 0; i < numShapes; i++) {
                     shapes[i].unbind("TweenEnd");
-                    shapes[i].cancelTween(playerDimensions);
+                    shapes[i].cancelTween(playerDimClone());
                 }
                 /* Trigger loss */
                 Crafty.trigger("Lose");
@@ -243,9 +249,7 @@ define(['crafty', 'jquery', './Util',
 
         /* Initialize shapes */
         for (var i = 0 ; i < numShapes; i++) {
-            var shape = Crafty.e("2D, Canvas, Shape, Tween")
-                .fillcolor(curColor)
-                .enclose(width, height);
+            var shape = Crafty.e("2D, Canvas, Shape, Tween");
             shape.z = -i;
 
             if (i%4 === 0) {
@@ -267,7 +271,7 @@ define(['crafty', 'jquery', './Util',
         }
 
         function nextTween() {
-            tweenTo(shapes[curShape], playerDimensions, tweenTime);
+            tweenTo(shapes[curShape], playerDimClone(), tweenTime);
             curShape = (curShape+1)%numShapes;
             console.log(curShape);
         }
@@ -287,13 +291,16 @@ define(['crafty', 'jquery', './Util',
         console.log("MAIN");
         Crafty.background("#AAAAAA");
 
+        var points = 0;
+        var lost = false;
+
         var tutorialText = Crafty.e("2D, Canvas, Text")
             .attr({ x: width / 2 - 200, y: height / 2 - 200, z: 2000 })
             .textFont({ size: '30px', weight: 'bold' });
         tutorialText.visible = false;
 
         var playerShape = Crafty.e("2D, Canvas, Shape, Tween")
-            .attr(playerDimensions)
+            .attr(playerDimClone())
             .sides(7)
             .fillcolor(curColor);
         playerShape.z = 1000;
@@ -310,12 +317,11 @@ define(['crafty', 'jquery', './Util',
             }
 
             playerShape.attr({ x: width/2 - 30, y: height/2 - 30, w: 60, h: 60});
-            tweenTo(playerShape, playerDimensions, 300, "linear");
+            tweenTo(playerShape, playerDimClone(), 300, "linear");
         });
 
         Crafty.bind("Lose", function() {
             lost = true;
-            points = 0;
             lostTime = (new Date()).getTime();
             playerShape.tween({ x: width/2, y: height/2, w: 0, h: 0 }, 1000);
         });
@@ -327,14 +333,12 @@ define(['crafty', 'jquery', './Util',
         });
 
         var keyDownHandler = function(e) {
-            if (lost) {
-                if ((new Date).getTime() - lostTime > 500) {
-                    lost = false;
-                    Crafty.unbind("Score");
-                    Crafty.unbind("Lose");
-                    Crafty.unbind("TutorialEnd");
-                    Crafty.scene("Main");
-                }
+            if (lost && (new Date).getTime() - lostTime > 500) {
+                lost = false;
+                Crafty.unbind("Score");
+                Crafty.unbind("Lose");
+                Crafty.unbind("TutorialEnd");
+                Crafty.scene("Main");
             } else {
                 var sides = playerShape.sides();
                 switch (e.key) {
