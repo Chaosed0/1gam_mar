@@ -51,7 +51,7 @@ define(['crafty'], function(Crafty) {
         4: 2,
         5: 2,
         6: 2,
-        7: 2,
+        7: 1.5,
     };
 
     Crafty.c("Shape", {
@@ -67,8 +67,8 @@ define(['crafty'], function(Crafty) {
         },
 
         remove: function() {
-            this.unbind("Draw", draw);
             this.trigger("Invalidate");
+            this.unbind("Draw", draw);
         },
 
         sides: function(sides) {

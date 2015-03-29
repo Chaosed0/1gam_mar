@@ -2,9 +2,11 @@
 define(['crafty', 'jquery', './Util',
         './Circle',
         './Shape',
+        './Expires',
     ], function(Crafty, $, u) {
 
-    const initialTweenTime = 2500;
+    const initialTweenTime = 4000;
+    const initialGapTime = 1000;
     const tutorialTweenTime = 1500;
     const defaultEasingFunc = "linear";
     const colors = ["#FFAAAA", "#AAFFAA", "#AAAAFF"];
@@ -17,7 +19,7 @@ define(['crafty', 'jquery', './Util',
 
     var playerDimensions = { x: width/2 - 20, y: height/2 - 20, w: 40, h: 40}; 
 
-    var tutorial = true;
+    var tutorial = false;
     var lost = false;
     var lostTime = 0;
     var points = 0;
@@ -74,7 +76,7 @@ define(['crafty', 'jquery', './Util',
         shape.tween(end, time, easingFunc);
     }
 
-    var tutorialFlow = function(shape1, shape2, text, playerShape) {
+    var tutorialFlow = function(text, playerShape) {
         var fraction = 0.7;
         var sidesToKey = {
             3: "A",
@@ -88,6 +90,22 @@ define(['crafty', 'jquery', './Util',
             1: "K",
             2: "L",
         };
+
+        var shape1 = Crafty.e("2D, Canvas, Shape, Tween")
+            .fillcolor(curColor)
+            .sides(3)
+            .enclose(width, height);
+        shape1.z = 1;
+
+        var shape2 = Crafty.e("2D, Canvas, Shape, Tween")
+            .fillcolor(curColor)
+            .sides(4)
+            .enclose(width, height);
+        shape2.z = 0;
+
+        /* Total hack, etc, etc */
+        shape1.unbind("Move");
+        shape2.unbind("Move");
 
         var teachingColors = false;
         var tutorialSides = 3;
@@ -117,6 +135,8 @@ define(['crafty', 'jquery', './Util',
             } else {
                 if (tutorialColor >= colors.length) {
                     /* No more colors to teach - it's the end of the tutorial */
+                    shape1.destroy();
+                    shape2.destroy();
                     Crafty.trigger("TutorialEnd");
                 } else {
                     ender.sides(tutorialSides+2);
@@ -174,64 +194,98 @@ define(['crafty', 'jquery', './Util',
         partialTween(shape1, fraction, tutorialTweenTime*fraction);
     }
 
-    var normalFlow = function(shape1, shape2, playerShape) {
+    var normalFlow = function(playerShape) {
+        const numShapes = 15;
+        var shapes = new Array(numShapes);
+        var curShape = 0;
+        var closestShape = 0;
+
         var tweenTime = initialTweenTime;
+        var gapTime = initialGapTime;
+        var timer = Crafty.e("Expires");
+
+        /* Function called when any shape's tween ends */
         var tweenEnd = function() {
-            var ender = (this === shape1 ? shape1 : shape2);
-            var starter = (this === shape1 ? shape2 : shape1);
+            var ender = this;
+            u.assert(shapes[closestShape] === ender);
 
             if (ender.sides() !== playerShape.sides() ||
                     ender.fillcolor() !== playerShape.fillcolor()) {
                 /* Lose */
                 ender.visible = false;
+                /* Stop all tweens */
+                timer.destroy();
+                for (var i = 0; i < numShapes; i++) {
+                    shapes[i].unbind("TweenEnd");
+                    shapes[i].cancelTween(playerDimensions);
+                }
+                /* Trigger loss */
                 Crafty.trigger("Lose");
             } else {
-                /* Success */
-                ender.z = 0;
-                if (points != 0 && points%4 == 0) {
+                /* Put this shape behind the last shape */
+                ender.z = shapes[((closestShape-1)+numShapes)%numShapes].z-1;
+
+                /* Give this shape a new color or change its number of sides, depending */
+                if ((closestShape+numShapes)%4 == 0) {
                     randomColor(ender);
-                    tweenTime = Math.max(500, tweenTime - 200);
+                    ender.sides(7);
+                    gapTime = Math.max(500, tweenTime - 200);
                 } else {
                     randomShape(ender);
                 }
 
-                starter.z = 1;
-                tweenTo(starter, playerDimensions, tweenTime);
-
+                /* Add to score counter */
                 Crafty.trigger("Score");
             }
+
+            closestShape = (closestShape+1)%numShapes;
         };
 
-        curColor = u.randomElem(colors);
+        /* Initialize shapes */
+        for (var i = 0 ; i < numShapes; i++) {
+            var shape = Crafty.e("2D, Canvas, Shape, Tween")
+                .fillcolor(curColor)
+                .enclose(width, height);
+            shape.z = -i;
 
-        randomShape(shape1);
-        randomShape(shape2);
+            if (i%4 === 0) {
+                randomColor(shape);
+                shape.sides(7);
+            } else {
+                randomShape(shape);
+            }
+            shape.bind("TweenEnd", tweenEnd);
 
-        shape1.bind("TweenEnd", tweenEnd);
-        shape2.bind("TweenEnd", tweenEnd);
+            /* Total hack to destroy Crafty's HashMap.refresh() callback, which performs
+             * really horribly on larger entities
+             * This has the side effect of making collisions totally unusable, which
+             * shouldn't be a problem for this game */
+            shape.unbind("Move");
 
-        shape1.z = 1;
-        shape2.z = 0;
+            /* Add this shape to the list */
+            shapes[i] = shape;
+        }
 
-        /* Start one of the shapes tweening toward the player */
-        tweenTo(shape1, playerDimensions, tweenTime);
+        function nextTween() {
+            tweenTo(shapes[curShape], playerDimensions, tweenTime);
+            curShape = (curShape+1)%numShapes;
+            console.log(curShape);
+        }
+
+        /* Start the first shape tweening toward the player */
+        nextTween();
+        
+        /* After some time, tween the next shape */
+        timer.expires(gapTime, 1000)
+            .bind("Expired", function() {
+                /* Start the next shape tweening toward the player */
+                nextTween();
+            });
     }
 
     Crafty.scene("Main", function () {
         console.log("MAIN");
         Crafty.background("#AAAAAA");
-
-        var shape1 = Crafty.e("2D, Canvas, Shape, Tween")
-            .fillcolor(curColor)
-            .sides(3)
-            .enclose(width, height);
-        shape1.z = 1;
-
-        var shape2 = Crafty.e("2D, Canvas, Shape, Tween")
-            .fillcolor(curColor)
-            .sides(4)
-            .enclose(width, height);
-        shape2.z = 0;
 
         var tutorialText = Crafty.e("2D, Canvas, Text")
             .attr({ x: width / 2 - 200, y: height / 2 - 200, z: 2000 })
@@ -244,17 +298,10 @@ define(['crafty', 'jquery', './Util',
             .fillcolor(curColor);
         playerShape.z = 1000;
 
-        /* Total hack to destroy Crafty's HashMap.refresh() callback, which performs
-         * really horribly on larger entities
-         * This has the side effect of making collisions totally unusable, which
-         * shouldn't be a problem for this game */
-        shape1.unbind("Move");
-        shape2.unbind("Move");
-
         if (tutorial) {
-            tutorialFlow(shape1, shape2, tutorialText, playerShape);
+            tutorialFlow(tutorialText, playerShape);
         } else {
-            normalFlow(shape1, shape2, playerShape);
+            normalFlow(playerShape);
         }
 
         Crafty.bind("Score", function() {
@@ -276,7 +323,7 @@ define(['crafty', 'jquery', './Util',
         Crafty.bind("TutorialEnd", function() {
             points = 0;
             tutorial = false;
-            normalFlow(shape1, shape2, playerShape);
+            normalFlow(playerShape);
         });
 
         var keyDownHandler = function(e) {
