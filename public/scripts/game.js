@@ -333,12 +333,14 @@ define(['crafty', 'jquery', './Util',
         });
 
         var keyDownHandler = function(e) {
-            if (lost && (new Date).getTime() - lostTime > 500) {
-                lost = false;
-                Crafty.unbind("Score");
-                Crafty.unbind("Lose");
-                Crafty.unbind("TutorialEnd");
-                Crafty.scene("Main");
+            if (lost) {
+                if ((new Date).getTime() - lostTime > 500) {
+                    lost = false;
+                    Crafty.unbind("Score");
+                    Crafty.unbind("Lose");
+                    Crafty.unbind("TutorialEnd");
+                    Crafty.scene("Main");
+                }
             } else {
                 var sides = playerShape.sides();
                 switch (e.key) {
