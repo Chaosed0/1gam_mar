@@ -200,7 +200,7 @@ define(['crafty', 'jquery', './Util',
     }
 
     var normalFlow = function(playerShape) {
-        const numShapes = 15;
+        const numShapes = 10;
         var shapes = new Array(numShapes);
         var curShape = 0;
         var closestShape = 0;
